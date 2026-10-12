@@ -124,4 +124,4 @@ if st.button("get vibe"):
     """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.markdown("from xinyangma18")
+st.markdown("from hakowxy")
