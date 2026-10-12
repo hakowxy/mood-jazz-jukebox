@@ -1,150 +1,127 @@
-import streamlit as st
 import random
 
-# --- 1. Music Data (YOUR LINKS) ---
-# City Pop: 适合高能量/兴奋 (8-10分) 或通勤
-# Jazz HipHop: 适合中性/思考 (5-7分) 或学习
-# Ambient Jazz: 适合低能量/放松 (1-4分) 或在家/休息
-MUSIC_DATA = {
-    "City Pop": [
-        "https://www.youtube.com/embed/TBLZSXwfjbE", 
-        "https://www.youtube.com/embed/p9dRg8yQ2DY",
-    ],
-    
-    "Jazz HipHop": [
-        "https://www.youtube.com/embed/dtVwR4uMnfg", 
-        "https://www.youtube.com/embed/OIvGy0wM5_s",
-    ],
-    
-    "Ambient Jazz": [
-        "https://www.youtube.com/embed/CfPxlb8-ZQ0", 
-        "https://www.youtube.com/embed/o26qoCYLdS8",
-    ]
-}
+import streamlit as st
 
-# --- 2. Core Recommendation Logic (Python Function) ---
-def recommend_music(mood_score, location):
-    """
-    Returns a recommended music genre based on the mood score and location.
-    """
-    
-    # A. Mood-based primary determination
-    if mood_score >= 8:
-        genre = "City Pop"
-    elif mood_score >= 5:
-        genre = "Jazz HipHop"
-    else: # 1-4
-        genre = "Ambient Jazz"
+from jukebox import LOCATIONS, MUSIC_DATA, recommend_music, vibe_label
 
-    # B. Location-based refinement
-    if location == "Commuting":
-        if mood_score < 5:
-            genre = "Jazz HipHop"
-        else:
-            genre = "City Pop"
-    elif location == "Park/Outdoor":
-        if mood_score < 6:
-            genre = "Jazz HipHop"
-        else:
-            genre = "City Pop"
-    elif location == "Home":
-        if mood_score < 6:
-            genre = "Ambient Jazz"
-        else:
-            genre = "Jazz HipHop"
+st.set_page_config(page_title="mood jukebox", layout="wide")
 
-    return genre
-
-# --- 3. Streamlit UI (Pure Python for UI/Style) ---
-
-# Set page configuration (English)
-st.set_page_config(page_title="Mood Jazz Jukebox", layout="wide")
-
-# Custom CSS for jazz aesthetic (Deep Navy Blue, Creamy White, Gold)
+# --- kawaii minimal styling ---
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Indie+Flower&family=Gochi+Hand&display=swap');
+
     .stApp {
-        background-color: #1a1a2e; /* Deep Navy Blue */
-        color: #e4e6c3; /* Creamy White text */
-        font-family: 'Georgia', serif; 
+        background-color: #284d3c;
+        color: #FFFFFF;
+        font-family: 'Indie Flower', 'Gochi Hand', cursive;
+        font-size: 1.4em;
+        text-transform: lowercase;
     }
     h1, h2, h3 {
-        color: #f7b32b; /* Muted Gold/Amber */
+        color: #FF69B4 !important;
+        font-family: 'Indie Flower', 'Gochi Hand', cursive;
+        font-weight: 900;
+        text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.6);
+        text-transform: lowercase;
     }
-    .stSlider label, .stRadio label {
-        color: #e4e6c3;
+
+    /* keep every label and option readable on the dark green background */
+    [data-testid="stForm"] label, [data-testid="stRadio"] label, .stSlider > label {
+        color: #FFFFFF !important;
+        text-transform: lowercase;
+        font-family: 'Indie Flower', 'Gochi Hand', cursive;
     }
-    /* Style for the button */
+
+    /* square, pink-and-white radio buttons */
+    [data-testid="stRadio"] input[type="radio"] + div::before {
+        border-radius: 0% !important;
+        width: 18px;
+        height: 18px;
+        background-color: #FFFFFF !important;
+        border: 2px solid #FF69B4 !important;
+    }
+    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+        background-color: #FF69B4 !important;
+        border: 4px solid #FFFFFF !important;
+    }
+
+    /* cream button */
     .stButton>button {
-        background-color: #f7b32b;
-        color: #1a1a2e;
-        border-radius: 5px;
-        padding: 10px 20px;
-        border: none;
-        font-weight: bold;
+        background-color: #F5F5DC;
+        color: #FF69B4;
+        border: 3px solid #FF69B4;
+        font-weight: 700;
+        border-radius: 12px;
+        font-family: 'Indie Flower', 'Gochi Hand', cursive;
+        font-size: 1.4em;
+        text-transform: lowercase;
     }
-    /* Streamlit Info/Success boxes */
-    [data-testid="stNotification"] {
-        border-left: 5px solid #f7b32b;
+    .stButton>button:hover { background-color: #f0f0c9; }
+
+    /* slider knob */
+    .stSlider [data-testid="stTickBar"] div { color: #FFFFFF !important; }
+    .stSlider [data-testid="stThumbValue"] {
+        background-color: #FF69B4;
+        border: 2px solid #FFFFFF;
+        color: #FFFFFF !important;
     }
+    .stSlider [data-testid="stTrack"] { background: linear-gradient(to right, #F5F5DC, #FF69B4); }
+
+    /* falling decorations */
+    @keyframes snowfall { 0% {top: -10%;} 100% {top: 100%;} }
+    .snowflake {
+        color: #FFFFFF;
+        position: fixed;
+        z-index: 9999;
+        user-select: none;
+        pointer-events: none;
+        animation: snowfall linear infinite;
+    }
+    .snowflake:nth-child(1) { left: 5%;  font-size: 1.5em; animation-duration: 10s; animation-delay: 0s; }
+    .snowflake:nth-child(2) { left: 15%; font-size: 1.0em; animation-duration: 15s; animation-delay: 2s; }
+    .snowflake:nth-child(3) { left: 25%; font-size: 1.8em; animation-duration: 12s; animation-delay: 4s; }
+    .snowflake:nth-child(4) { left: 40%; font-size: 1.3em; animation-duration: 18s; animation-delay: 6s; }
+    .snowflake:nth-child(5) { left: 60%; font-size: 1.6em; animation-duration: 11s; animation-delay: 8s; }
+    .snowflake:nth-child(6) { left: 80%; font-size: 1.1em; animation-duration: 16s; animation-delay: 10s; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🎧 Mood Jazz Jukebox: Find Your Rhythm")
-st.subheader("Jazz, Lofi HipHop, City Pop — Personalized for Your Vibe.")
+st.markdown("""
+    <div class="snowflake">💖</div>
+    <div class="snowflake">⭐</div>
+    <div class="snowflake">🎄</div>
+    <div class="snowflake">🎀</div>
+    <div class="snowflake">❄️</div>
+    <div class="snowflake">⭐</div>
+""", unsafe_allow_html=True)
 
-# --- UI Controls ---
+st.title("mood jukebox")
+st.markdown("---")
+
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 1. How's Your Mood Score?")
-    # Slider for mood score (1 to 10)
-    mood_score = st.slider(
-        label="Select a score from 1 (Low Energy) to 10 (Excited)",
-        min_value=1,
-        max_value=10,
-        value=5
-    )
-    st.info(f"Your Current Mood Score: **{mood_score} / 10**")
+    st.markdown("### set your mood dial")
+    mood_score = st.slider("turn the knob: 1 (cozy) to 10 (sparkly)", min_value=1, max_value=10, value=6)
+    st.markdown(f"**current vibe:** {vibe_label(mood_score)}")
 
 with col2:
-    st.markdown("### 2. Where Are You Right Now?")
-    # Radio buttons for location
-    location = st.radio(
-        label="Choose your current setting",
-        options=("Home", "Commuting", "Park/Outdoor", "Cafe/Study"),
-        index=0 # Default to Home
-    )
-    st.info(f"Your Location: **{location}**")
+    st.markdown("### scene location")
+    location = st.radio("where are you listening?", options=LOCATIONS, index=0)
+    st.markdown(f"**scene selected:** {location}")
 
 st.markdown("---")
 
-# --- Music Recommendation Button ---
-if st.button("🎵 Get My Personalized Jazz Track"):
-    # 1. Get the recommended genre
-    recommended_genre = recommend_music(mood_score, location)
-
-    # 2. Select a random track URL from that genre
-    if recommended_genre in MUSIC_DATA and MUSIC_DATA[recommended_genre]:
-        track_url = random.choice(MUSIC_DATA[recommended_genre])
-
-        st.success(f"**Recommended Genre:** {recommended_genre}")
-        st.markdown(f"**Enjoy this selection!**")
-
-        # 3. Display the music player using an HTML Iframe
-        iframe_html = f"""
-            <iframe 
-                src="{track_url}" 
-                width="100%" 
-                height="400" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        """
-        st.markdown(iframe_html, unsafe_allow_html=True)
-    else:
-        st.error(f"Sorry, no tracks found for the recommended genre: {recommended_genre}. Please check MUSIC_DATA.")
+if st.button("get vibe"):
+    genre = recommend_music(mood_score, location)
+    track_url = random.choice(MUSIC_DATA[genre])
+    st.subheader(f"recommended: {genre} 🎶")
+    st.markdown(f"""
+        <iframe src="{track_url}" width="100%" height="350" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.markdown("A project built with Streamlit & Python.")
+st.markdown("from hakowxy")

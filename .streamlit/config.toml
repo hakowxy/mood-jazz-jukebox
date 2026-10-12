@@ -1,0 +1,7 @@
+# Theme colours for the jukebox: dark green background, pink accents
+[theme]
+base = "dark"
+primaryColor = "#FF69B4"
+backgroundColor = "#284d3c"
+secondaryBackgroundColor = "#1f3d30"
+textColor = "#FFFFFF"
