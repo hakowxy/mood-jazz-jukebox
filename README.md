@@ -2,7 +2,9 @@
 
 A small Streamlit app that picks music for your mood. Turn the mood dial, choose where you're listening, and it recommends a genre (city pop, jazz hip-hop, study focus or ambient jazz) and plays a matching track.
 
-![mood jukebox](images/screenshot.png)
+**[Try it live](https://mood-jazz-jukebox-pj9fzgvsfxyczs7aerxtxm.streamlit.app/)**
+
+[![mood jukebox](images/screenshot.png)](https://mood-jazz-jukebox-pj9fzgvsfxyczs7aerxtxm.streamlit.app/)
 
 *The screenshot uses fallback fonts. The live app uses the hand-drawn Indie Flower font.*
 
