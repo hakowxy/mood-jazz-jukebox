@@ -30,4 +30,4 @@ streamlit run app.py
 
 Tests: `pip install -r requirements-dev.txt && pytest`
 
-Built with Python and Streamlit by [Xinyang Ma](https://github.com/hakowxy).
+Built with Python and Streamlit by [Xinyang Ma](https://github.com/xinyangma18).
